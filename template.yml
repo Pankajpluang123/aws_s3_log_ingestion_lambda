@@ -24,9 +24,9 @@ Metadata:
     LicenseUrl: LICENSE
     ReadmeUrl: README.md
     Labels: ['newrelic', 'logs', 'logging', 'ingestion', 'lambda', 's3']
-    HomePageUrl: https://github.com/newrelic/aws_s3_log_ingestion_lambda
+    HomePageUrl: https://github.com/emasdigi/aws_s3_log_ingestion_lambda
     SemanticVersion: 1.1.1
-    SourceCodeUrl: https://github.com/newrelic/aws_s3_log_ingestion_lambda
+    SourceCodeUrl: https://github.com/emasdigi/aws_s3_log_ingestion_lambda
 
 Resources:
   NewRelicLogIngestionFunction:
