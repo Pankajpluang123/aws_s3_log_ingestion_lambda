@@ -121,7 +121,8 @@ def _package_log_payload(data):
                     "plugin": LOGGING_PLUGIN_METADATA,
                     "aws": {
                         "invoked_function_arn": data["context"]["invoked_function_arn"],
-                        "s3_bucket_name": data["context"]["s3_bucket_name"]},
+                        "s3_bucket_name": data["context"]["s3_bucket_name"],
+                        "app_name":data["context"]["app_name"]},
                     "logtype": _get_log_type()
                 }},
             "logs": log_messages,
@@ -214,6 +215,8 @@ async def _fetch_data_from_s3(bucket, key, context):
         batch_counter = 1
         start = time.time()
         isCloudTrail = bool(re.search(".*CloudTrail.*\.json.gz$", key))
+        app_name = fatch_app_name(log_file_url)
+        s3MetaData["app_name"] = app_name
         with open(log_file_url, encoding='utf-8') as log_lines:
             for index, log in enumerate(log_lines):
                 if isCloudTrail:
@@ -229,14 +232,14 @@ async def _fetch_data_from_s3(bucket, key, context):
                     log_batches.append(log)
                 if asizeof.asizeof(log_batches) > (MAX_BATCH_SIZE * BATCH_SIZE_FACTOR):
                     logger.debug(f"sending batch: {batch_counter}")
-                    data = {"context": s3MetaData, "entry": log_batches}
+                    data = {"context": s3MetaData, "entry": log_batches,"app_name":app_name}
                     batch_request.append(create_log_payload_request(data, session))
                     if len(batch_request) >= REQUEST_BATCH_SIZE:
                         await asyncio.gather(*batch_request)
                         batch_request = []
                     log_batches = []
                     batch_counter += 1
-        data = {"context": s3MetaData, "entry": log_batches}
+        data = {"context": s3MetaData, "entry": log_batches,"app_name":app_name}
         batch_request.append(create_log_payload_request(data, session))
         logger.info("Sending data to NR logs.....")
         output = await asyncio.gather(*batch_request)
@@ -278,6 +281,14 @@ def lambda_handler(event, context):
     else:
         return {'statusCode': 200, 'message': 'Uploaded logs to New Relic'}
 
+def fatch_app_name(log_file_url):
+    app_name = ""
+    with open(log_file_url, encoding='utf-8') as log_lines:
+        for index, log in enumerate(log_lines):
+            log_dict = json.loads(log)
+            if "Spark Properties" in log_dict:
+                app_name = json.loads(log)["Spark Properties"]["spark.app.name"]
+    return app_name
 
 if __name__ == "__main__":
     lambda_handler('', '')
