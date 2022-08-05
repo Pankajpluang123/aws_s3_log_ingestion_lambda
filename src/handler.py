@@ -1,5 +1,14 @@
 import json
+import os
 import sys
+import subprocess
+
+# pip install custom package to /tmp/ and add to path
+subprocess.call('pip install aiohttp -t /tmp/ --no-cache-dir'.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+subprocess.call('pip install smart_open -t /tmp/ --no-cache-dir'.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+subprocess.call('pip install pympler -t /tmp/ --no-cache-dir'.split(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+sys.path.insert(1, '/tmp/')
 import urllib.parse
 import boto3
 import gzip
