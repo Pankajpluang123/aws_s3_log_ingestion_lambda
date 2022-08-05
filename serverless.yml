@@ -41,8 +41,8 @@ functions:
     handler: src/handler.lambda_handler
     environment: 
       LICENSE_KEY: ${env:LICENSE_KEY}
-      LOG_TYPE: ${env:LOG_TYPE}
-      DEBUG_ENABLED: ${env:DEBUG_ENABLED}
+      LOG_TYPE: ""
+      DEBUG_ENABLED: false
     events:
       - s3:
           bucket: ${env:S3_BUCKET_NAME}
