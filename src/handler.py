@@ -224,10 +224,14 @@ async def _fetch_data_from_s3(bucket, key, context):
         batch_counter = 1
         start = time.time()
         isCloudTrail = bool(re.search(".*CloudTrail.*\.json.gz$", key))
-        app_name = fatch_app_name(log_file_url)
-        s3MetaData["app_name"] = app_name
+        app_name = ''
+        #s3MetaData["app_name"] = app_name
         with open(log_file_url, encoding='utf-8') as log_lines:
+            #app_name = fatch_app_name(log_lines,app_name)
+            s3MetaData["app_name"] = app_name
             for index, log in enumerate(log_lines):
+                app_name = fatch_app_name(log,app_name)
+                s3MetaData["app_name"] = app_name
                 if isCloudTrail:
                     # This is a CloudTrail log - we need to apply special preprocessing
                     cloudtrail_events=json.loads(log)["Records"]
@@ -263,6 +267,8 @@ async def _fetch_data_from_s3(bucket, key, context):
 def lambda_handler(event, context):
     # Get bucket from s3 upload event
     _setting_console_logging_level()
+    print("value of event=")
+    print(event)
     bucket = event['Records'][0]['s3']['bucket']['name']
     key = urllib.parse.unquote_plus(
         event['Records'][0]['s3']['object']['key'], encoding='utf-8')
@@ -290,13 +296,15 @@ def lambda_handler(event, context):
     else:
         return {'statusCode': 200, 'message': 'Uploaded logs to New Relic'}
 
-def fatch_app_name(log_file_url):
-    app_name = ""
-    with open(log_file_url, encoding='utf-8') as log_lines:
-        for index, log in enumerate(log_lines):
-            log_dict = json.loads(log)
-            if "Spark Properties" in log_dict:
-                app_name = json.loads(log)["Spark Properties"]["spark.app.name"]
+def fatch_app_name(log_lines,app_name):
+    log_dict = json.loads(log_lines)
+    #with open(log_file_url, encoding='utf-8') as log_lines:
+    if "Spark Properties" in log_dict:
+        app_name = json.loads(log_lines)["Spark Properties"]["spark.app.name"]
+    elif "Properties" in log_dict:
+        app_name = json.loads(log_lines)["Properties"]
+        if "spark.app.name" in app_name:
+            app_name = app_name["spark.app.name"]
     return app_name
 
 if __name__ == "__main__":
